@@ -1,0 +1,62 @@
+﻿@page "/dragdrop"
+@using Almanacco_Virtuale.Services
+@implements IDisposable
+
+<style>
+    .sortable-item {
+        padding: 10px;
+        margin: 5px 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: grab;
+    }
+
+        .sortable-item:active {
+            cursor: grabbing;
+        }
+
+    .sortable-drag { /* questo stile css diventa visibile sotto il mouse mentre trascini l'elemento */
+        opacity: 0;
+        transform: scale(1.02);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        background: #f8f9fa;
+    }
+
+    .sortable-ghost { /* questo stile css scursice l'elemento selezionato in fase di trascinamento */
+        opacity: 1;
+        background: #e9ecef;
+    }
+</style>
+
+<SortableList TItem="Employee"
+              Data="employees"
+              Context="item"
+              OnUpdate="@OnEmployeeListUpdate"
+              DragClass="sortable-drag"
+              GhostClass="sortable-ghost">
+    <ItemTemplate>
+        <div class="sortable-item d-flex align-items-center">
+            <span class="handle me-2">≡</span>
+            <div class="flex-grow-1">@item.Name</div>
+        </div>
+    </ItemTemplate>
+</SortableList>
+
+@code {
+    public List<Employee> employees = Enumerable.Range(1, 5).Select(i => new Employee(i, $"Employee {i}")).ToList();
+
+    private void OnEmployeeListUpdate(SortableListEventArgs args)
+    {
+        var itemToMove = employees[args.OldIndex];
+        employees.RemoveAt(args.OldIndex);
+        employees.Insert(args.NewIndex, itemToMove);
+    }
+
+    public record Employee(int Id, string? Name);
+
+    public void Dispose()
+    {
+        // Pulizia se necessaria
+    }
+}

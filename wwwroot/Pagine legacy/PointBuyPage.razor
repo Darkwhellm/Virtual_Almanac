@@ -1,0 +1,61 @@
+﻿@page "/PointBuyPage"
+@using Almanacco_Virtuale.Services
+
+@code {
+    private Dex_Entry entry = new();
+    private int PointLimit = 20;
+    private string[] StatNames = new[] { "STR", "DEX", "CON", "INT", "WIS", "CHA" };
+
+
+    private void IncreaseStat(int index)
+    {
+        int currentValue = PointBuy.GetStat(index, entry.Base_Stats);
+        if (currentValue < 18)
+        {
+            PointBuy.SetStat(index, currentValue + 1, entry.Base_Stats);
+            if (PointBuy.CalculatePointBuyCost(entry.Base_Stats) > PointLimit)
+                PointBuy.SetStat(index, currentValue, entry.Base_Stats); // ripristina
+        }
+    }
+
+    private void DecreaseStat(int index)
+    {
+        int currentValue = PointBuy.GetStat(index, entry.Base_Stats);
+        if (currentValue > 7)
+        {
+            PointBuy.SetStat(index, currentValue - 1, entry.Base_Stats);
+            if (PointBuy.CalculatePointBuyCost(entry.Base_Stats) > PointLimit)
+                PointBuy.SetStat(index, currentValue, entry.Base_Stats); // ripristina
+        }
+    }
+
+}
+
+<h3>Point Buy - Stat Allocator</h3>
+
+<p>Punti usati: @PointBuy.CalculatePointBuyCost(entry.Base_Stats) / @PointLimit</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Stat</th>
+            <th>Valore</th>
+            <th>Azioni</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (int i = 0; i < entry.Base_Stats.Length; i++)
+        {
+            var statIndex = i;  // <-- qui il trucco!
+
+            <tr>
+                <td>@StatNames[statIndex]</td>
+                <td>@PointBuy.GetStat(statIndex, entry.Base_Stats)</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" @onclick="@(() => IncreaseStat(statIndex))">+</button>
+                    <button class="btn btn-sm btn-danger" @onclick="@(() => DecreaseStat(statIndex))">-</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

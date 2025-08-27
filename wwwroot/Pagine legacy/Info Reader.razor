@@ -1,0 +1,32 @@
+﻿@page "/Info_Reader"
+@using Almanacco_Virtuale.Services
+@inject ApiHandler ApiHandler
+
+<h3>Pokémon Info</h3>
+
+@if (dex_entry is null)
+{
+    <p>No pokémon found!!!</p>
+}
+else
+{
+    <p><strong>Name:</strong> @dex_entry.Name</p>
+    <p><strong>Dex Number:</strong> @dex_entry.Dex_Number</p>
+}
+
+@code {
+    Dex_Entry? dex_entry;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ApiHandler.Url = "https://almanacco-virtuale-default-rtdb.europe-west1.firebasedatabase.app/Info/Anime/1.json";
+        ApiHandler.Method = HttpMethod.Get;
+
+        var response = await ApiHandler.SendRequestAsync();
+        if (response.IsSuccessStatusCode)
+        {
+            var responseBody = await response.Content.ReadAsStringAsync();
+            dex_entry = System.Text.Json.JsonSerializer.Deserialize<Dex_Entry>(responseBody);
+        }
+    }
+}
