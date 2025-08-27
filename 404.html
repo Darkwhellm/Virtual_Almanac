@@ -1,1 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Almanacco Virtuale</title>
+    <base href="/Virtual_Almanac/" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="_content/Blazor.Bootstrap/blazor.bootstrap.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link href="Almanacco Virtuale.styles.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+</head>
+
+<body>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <!-- Add chart.js reference if chart components are used in your application. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.0.1/chart.umd.js" integrity="sha512-gQhCDsnnnUfaRzD8k1L5llCCV6O9HN09zClIzzeJ8OJ9MpGmIlCxm+pdCkqTwqJ4JcjbojFr79rl2F1mzcoLMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- Add chartjs-plugin-datalabels.min.js reference if chart components with data label feature is used in your application. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js" integrity="sha512-JPcRR8yFa8mmCsfrw4TNte1ZvF1e3+1SdGMslZvmrzDYxS69J7J49vkFL8u6u8PlPJK+H3voElBtUCzaXj+6ig==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- Add sortable.js reference if SortableList component is used in your application. -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="_content/Blazor.Bootstrap/blazor.bootstrap.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDK - Configura qui il tuo Project ID: almanacco-virtuale -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+        // La tua configurazione Firebase (dal Project Settings della console)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGoOBaL8MNKCRz0GxpSPJNCedDaHYb9GE",
+            authDomain: "almanacco-virtuale.firebaseapp.com",
+            databaseURL: "https://almanacco-virtuale-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "almanacco-virtuale",
+            storageBucket: "almanacco-virtuale.firebasestorage.app",
+            messagingSenderId: "462607430813",
+            appId: "1:462607430813:web:40a7d27db98d201bc65074",
+            measurementId: "G-DGMG1WHEVX"
+        };
+
+        // Inizializza Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Ora, definiamo le funzioni JavaScript che verranno chiamate dal C# di Blazor
+        // e rendiamole disponibili globalmente o tramite un oggetto namespace per l'interop.
+        window.firebaseInterop = {
+            // Funzione per il login con Google
+            signInWithGoogle: async function () {
+                const provider = new GoogleAuthProvider();
+                try {
+                    const result = await signInWithPopup(auth, provider);
+                    const user = result.user;
+                    console.log("Utente loggato con Google (JS):", user.email);
+                    return { uid: user.uid, email: user.email, displayName: user.displayName, photoURL: user.photoURL };
+                } catch (error) {
+                    console.error("Errore login con Google (JS):", error.message);
+                    throw error; // Rilancia l'errore per gestirlo in C#
+                }
+            },
+
+            // Funzione per il logout
+            signOut: async function () {
+                try {
+                    await signOut(auth);
+                    console.log("Utente sloggato (JS).");
+                } catch (error) {
+                    console.error("Errore logout (JS):", error.message);
+                    throw error;
+                }
+            },
+
+            // Registra un callback per lo stato di autenticazione
+            // Questa funzione JS chiamerà una funzione C# quando lo stato cambia
+            onAuthStateChanged: function (dotNetHelper) {
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        dotNetHelper.invokeMethodAsync('NotifyAuthStateChanged', { uid: user.uid, email: user.email, displayName: user.displayName, photoURL: user.photoURL });
+                    } else {
+                        dotNetHelper.invokeMethodAsync('NotifyAuthStateChanged', null); // Nessun utente
+                    }
+                });
+            }
+        };
+    </script>
+
+</body>
+
+</html>
