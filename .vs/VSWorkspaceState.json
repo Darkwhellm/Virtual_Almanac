@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\wwwroot"
   ],
-  "SelectedNode": "\\C:\\Users\\Alberto\\Source\\Repos\\Virtual_Almanac",
+  "SelectedNode": "\\wwwroot",
   "PreviewInSolutionExplorer": false
 }
